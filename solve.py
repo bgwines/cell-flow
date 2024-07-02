@@ -14,13 +14,13 @@ TRUE_SOURCE_NAME = "true_source"
 TRUE_SINK_NAME = "true_sink"
 
 # OpenSCAD-only params
-GRANULARITY = 10
+GRANULARITY = 30
 CELL_H = 5
 
 # dimensions
 PLATE_LEN_X = 40
 PLATE_LEN_Y = 20
-PLATE_LEN_Z = 5
+PLATE_LEN_Z = 1
 POINTS = [[x, y, z]
           for x in range(PLATE_LEN_X)
           for y in range(PLATE_LEN_Y)
@@ -35,7 +35,7 @@ SOURCES = [[5,14,PLATE_LEN_Z-1]]
 SINKS = [[15,5,0], [29,16,0], [0,0,0]]
 
 # graph params
-EDGE_CAPACITY = 1
+EDGE_CAPACITY = 3
 EDGE_WEIGHT = 1
 SOURCE_OUTFLOW_CAPACITY = 5 * EDGE_CAPACITY
 SINK_INFLOW_CAPACITY = SOURCE_OUTFLOW_CAPACITY / len(SINKS)
@@ -54,7 +54,7 @@ def write_spec(mesh):
     $SOURCES = {SOURCES};
     $SINKS = {SINKS};
 
-    $COLORS = {mesh};
+    $CURRENT = {mesh};
     """)
 
 
@@ -91,14 +91,13 @@ def solve():
 
     min_cost_flow = networkx.max_flow_min_cost(
         graph, TRUE_SOURCE_NAME, TRUE_SINK_NAME)
-    # print(f"Maximum flow: {flow_value}")
     print(f"outflow capacity: {SOURCE_OUTFLOW_CAPACITY}")
     print(f"inflow capacity: {SINK_INFLOW_CAPACITY}")
 
     mesh = copy.deepcopy(EMPTY_MESH)
     for [x, y, z] in POINTS:
         edges = min_cost_flow[name([x, y, z])]
-        mesh[x][y][z] = sum(edges.values()) / SOURCE_OUTFLOW_CAPACITY
+        mesh[x][y][z] = sum(edges.values()) / (EDGE_CAPACITY * len(edges)) # SOURCE_OUTFLOW_CAPACITY
     return mesh
 
 
